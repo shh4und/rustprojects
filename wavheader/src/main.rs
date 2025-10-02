@@ -34,14 +34,19 @@ fn main() {
     let format_str = String::from_utf8(wav_header.format.to_be_bytes().to_vec()).unwrap_or_else(|_| "Invalid".to_string());
 
     println!(
-        ".WAV Header extracted {{\n\tChunkID: {}\n\tChunkSize: {}\n\tFormat: {}\n\tAudioFormat: {}\n\tNumChannels: {}\n\tSampleRate: {}\n\tByteRate: {}\n\tBitsPerSample: {}\n}}",
+        ".WAV Header extracted {{\n\tChunkID: {}\n\tChunkSize: {}\n\tFormat: {}\n\tSubChunk1ID: {}\n\tSubChunk1Size: {}\n\tAudioFormat: {}\n\tNumChannels: {}\n\tSampleRate: {}\n\tByteRate: {}\n\tBlockAlign: {}\n\tBitsPerSample: {}\n\tSubChunk2ID: {}\n\tSubChunk2Size: {}\n}}",
         chunk_id_str,
         wav_header.chunk_size.to_string(),
         format_str,
+        wav_header.sub_chunk_1_id.to_string(),
+        wav_header.sub_chunk_1_size.to_string(),
         wav_header.audio_format.to_string(),
         wav_header.num_channels.to_string(),
         wav_header.sample_rate.to_string(),
         wav_header.byte_rate.to_string(),
-        wav_header.bits_per_sample.to_string()
+        wav_header.block_align.to_string(),
+        wav_header.bits_per_sample.to_string(),
+        wav_header.sub_chunk_2_id.to_string(),
+        wav_header.sub_chunk_2_size.to_string(),
     );
 }
