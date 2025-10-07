@@ -14,3 +14,8 @@ pub fn y(opcode: u16) -> u8 {
 pub fn kk(opcode: u16) -> u8 {
     (opcode & 0x00FF) as u8
 }
+
+pub fn k(opcode: u16) -> u8 {
+    (opcode & 0x000F) as u8
+}
+
