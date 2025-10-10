@@ -2,89 +2,53 @@
 // use std::fmt;
 
 pub enum Instruction {
-    CLS,
-    RET,
-    SYS(u16),
-    JP(u16),
-    CALL(u16),
-    SEVxImm { x: u8, imm: u8 },
-    SNEVxImm { x: u8, imm: u8 },
-    SEVxVy { x: u8, y: u8 },
-    LDVxImm { x: u8, imm: u8 },
-    ADDVxImm { x: u8, imm: u8 },
-    LDVxVy { x: u8, y: u8 },
-    ORVxVy { x: u8, y: u8 },
-    ANDVxVy { x: u8, y: u8 },
-    XORVxVy { x: u8, y: u8 },
-    ADDVxVy { x: u8, y: u8 },
-    SUBVxVy { x: u8, y: u8 },
-    SHRVxVy { x: u8, y: u8 },
-    SUBNVxVy { x: u8, y: u8 },
-    SHLVxVy { x: u8, y: u8 },
-    SNEVxVy { x: u8, y: u8 }, // SNE Vx, Vy (Skip next instruction if Vx != Vy)
-    LDI(u16), // LD I, addr (Set I = nnn)
-    JPV0(u16), // JP V0, addr (Jump to location nnn + V0)
-    RNDVxImm { x: u8, imm: u8},
-    DRWVxVyn {x: u8, y: u8, n: u8}, // DRW Vx, Vy, nibble (Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision)
-    DRWVxVy0 { x: u8, y: u8 },
-    SKPVx(u8),
-    SKNPVx(u8),
-    LDVxDT(u8),
-    LDVxK(u8),
-    LDDTVx(u8),
-    LDSTVx(u8),
-    ADDIVx(u8),
-    LDFVx(u8),
-    LDBVx(u8),
-    LDIVx(u8),
-    LDVxI(u8),
-    LDHFVx(u8),
-    LDRV(u8),
-    LDVxR(u8),
-    SCD(u8),
-    SCR,
-    SCL,
-    EXIT,
-    LOW,
-    HIGH,
-
-    Unknown(u16),
+    CLS, // Clear the display.
+    RET, // Return from a subroutine.
+    SYS(u16), // Jump to a machine code routine at nnn. (Ignored by modern interpreters.)
+    JP(u16), // Jump to location nnn.
+    CALL(u16), // Call subroutine at nnn.
+    SEVxImm { x: u8, imm: u8 }, // Skip next instruction if Vx == kk.
+    SNEVxImm { x: u8, imm: u8 }, // Skip next instruction if Vx != kk.
+    SEVxVy { x: u8, y: u8 }, // Skip next instruction if Vx == Vy.
+    LDVxImm { x: u8, imm: u8 }, // Set Vx = kk.
+    ADDVxImm { x: u8, imm: u8 }, // Set Vx = Vx + kk.
+    LDVxVy { x: u8, y: u8 }, // Set Vx = Vy.
+    ORVxVy { x: u8, y: u8 }, // Set Vx = Vx | Vy (bitwise OR).
+    ANDVxVy { x: u8, y: u8 }, // Set Vx = Vx & Vy (bitwise AND).
+    XORVxVy { x: u8, y: u8 }, // Set Vx = Vx ^ Vy (bitwise XOR).
+    ADDVxVy { x: u8, y: u8 }, // Set Vx = Vx + Vy, set VF = carry.
+    SUBVxVy { x: u8, y: u8 }, // Set Vx = Vx - Vy, set VF = NOT borrow.
+    SHRVxVy { x: u8, y: u8 }, // Set Vx = Vx >> 1, set VF = LSB.
+    SUBNVxVy { x: u8, y: u8 }, // Set Vx = Vy - Vx, set VF = NOT borrow.
+    SHLVxVy { x: u8, y: u8 }, // Set Vx = Vx << 1, set VF = MSB.
+    SNEVxVy { x: u8, y: u8 }, // Skip next instruction if Vx != Vy.
+    LDI(u16), // Set I = nnn.
+    JPV0(u16), // Jump to location nnn + V0.
+    RNDVxImm { x: u8, imm: u8}, // Set Vx = random byte & kk.
+    DRWVxVyn {x: u8, y: u8, n: u8}, // Display n-byte sprite at (Vx, Vy), set VF = collision.
+    DRWVxVy0 { x: u8, y: u8 }, // Display 16x16 sprite at (Vx, Vy), set VF = collision. (Super Chip-48)
+    SKPVx(u8), // Skip next instruction if key Vx is pressed.
+    SKNPVx(u8), // Skip next instruction if key Vx is not pressed.
+    LDVxDT(u8), // Set Vx = delay timer value.
+    LDVxK(u8), // Wait for key press, store in Vx.
+    LDDTVx(u8), // Set delay timer = Vx.
+    LDSTVx(u8), // Set sound timer = Vx.
+    ADDIVx(u8), // Set I = I + Vx.
+    LDFVx(u8), // Set I = location of sprite for digit Vx.
+    LDBVx(u8), // Store BCD of Vx in memory at I, I+1, I+2.
+    LDIVx(u8), // Store registers V0 through Vx in memory starting at I.
+    LDVxI(u8), // Read registers V0 through Vx from memory starting at I.
+    LDHFVx(u8), // Set I = location of high-res sprite for digit Vx. (Super Chip-48)
+    LDRV(u8), // Store Vx in RPL user flags. (Super Chip-48)
+    LDVxR(u8), // Read Vx from RPL user flags. (Super Chip-48)
+    SCD(u8), // Scroll display down by n lines. (Super Chip-48)
+    SCR, // Scroll display right by 4 pixels. (Super Chip-48)
+    SCL, // Scroll display left by 4 pixels. (Super Chip-48)
+    EXIT, // Exit the interpreter. (Super Chip-48)
+    LOW, // Set display to low resolution (64x32). (Super Chip-48)
+    HIGH, // Set display to high resolution (128x64). (Super Chip-48)
+    Unknown(u16), // Unknown opcode.
 }
-
-
-
-
-
-// pub fn run(rom: &[u8]) {
-//     let start_addr = 0x200usize;
-//     for (idx, chunk) in rom.chunks_exact(2).enumerate() {
-//         let opcode = ((chunk[0] as u16) << 8) | (chunk[1] as u16);
-//         let addr = start_addr + idx * 2;
-//         let instr = decode(opcode);
-//         println!("{:03X}: {:04X}  {}", addr, opcode, instr);
-//     }
-
-//     let rem = rom.chunks_exact(2).remainder();
-//     if !rem.is_empty() {
-//         eprintln!("Warning: ROM has remainder bytes: {:?}", rem);
-//     }
-// }
-
-// // Opcional: enum Instruction para facilitar evolução
-// #[derive(Debug)]
-
-
-// impl fmt::Display for Instruction {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         match self {
-//             Instruction::CLS => write!(f, "CLS"),
-//             Instruction::RET => write!(f, "RET"),
-//             Instruction::JP(addr) => write!(f, "JP {:03X}", addr),
-//             Instruction::LDVxImm { x, imm } => write!(f, "LD V{:X}, {:02X}", x, imm),
-//             Instruction::Unknown(op) => write!(f, "???: {:04X}", op),
-//         }
-//     }
-// }
 
 pub fn decode(opcode: u16) -> Instruction {
     match (opcode & 0xF000) >> 12 {
@@ -157,31 +121,17 @@ pub fn decode(opcode: u16) -> Instruction {
     }
 }
 
-/// Retorna os 12 bits menos significativos (NNN).
+/// Returns the 12 least significant bits (NNN).
 pub fn nnn(opcode: u16) -> u16 { opcode & 0x0FFF }
 
-/// Retorna o byte menos significativo (KK).
+/// Returns the least significant byte (KK).
 pub fn kk(opcode: u16) -> u8 { (opcode & 0x00FF) as u8 }
 
-/// Retorna nibble menos significativo (N).
+/// Returns the least significant nibble (N).
 pub fn n(opcode: u16) -> u8 { (opcode & 0x000F) as u8 }
 
-/// Retorna o nibble X (bits 8..11).
+/// Returns the X nibble (bits 8..11).
 pub fn x(opcode: u16) -> u8 { ((opcode & 0x0F00) >> 8) as u8 }
 
-/// Retorna o nibble Y (bits 4..7).
+/// Returns the Y nibble (bits 4..7).
 pub fn y(opcode: u16) -> u8 { ((opcode & 0x00F0) >> 4) as u8 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_extract() {
-//         let op = 0x6A3C;
-//         assert_eq!(x(op), 0xA);
-//         assert_eq!(kk(op), 0x3C);
-//         assert_eq!(nnn(op), 0xA3C);
-//         assert_eq!(k(op), 0xC);
-//     }
-// }
