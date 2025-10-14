@@ -122,16 +122,16 @@ pub fn decode(opcode: u16) -> Instruction {
 }
 
 /// Returns the 12 least significant bits (NNN).
-pub fn nnn(opcode: u16) -> u16 { opcode & 0x0FFF }
+fn nnn(opcode: u16) -> u16 { opcode & 0x0FFF }
 
 /// Returns the least significant byte (KK).
-pub fn kk(opcode: u16) -> u8 { (opcode & 0x00FF) as u8 }
+fn kk(opcode: u16) -> u8 { (opcode & 0x00FF) as u8 }
 
 /// Returns the least significant nibble (N).
-pub fn n(opcode: u16) -> u8 { (opcode & 0x000F) as u8 }
+fn n(opcode: u16) -> u8 { (opcode & 0x000F) as u8 }
 
 /// Returns the X nibble (bits 8..11).
-pub fn x(opcode: u16) -> u8 { ((opcode & 0x0F00) >> 8) as u8 }
+fn x(opcode: u16) -> u8 { ((opcode & 0x0F00) >> 8) as u8 }
 
 /// Returns the Y nibble (bits 4..7).
-pub fn y(opcode: u16) -> u8 { ((opcode & 0x00F0) >> 4) as u8 }
+fn y(opcode: u16) -> u8 { ((opcode & 0x00F0) >> 4) as u8 }
