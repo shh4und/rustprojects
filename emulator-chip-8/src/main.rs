@@ -23,8 +23,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map_err(|e| format!("Error at loading rom into Chip8 memory: {}", e))?;
 
 
-    for _ in 0..100 {
+    let max_cycles = 500;
+    let mut cycle_count = 0;
+
+    loop {
         cpu.cycle();
+        cycle_count += 1;
+        println!("#{} cycle", cycle_count);
+        
+        if cycle_count >= max_cycles{
+            println!("\nReached {} cycles, stopping...", max_cycles);
+            break;
+        }
     }
 
     Ok(())
