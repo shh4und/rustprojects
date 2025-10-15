@@ -134,6 +134,42 @@ impl Chip8 {
             Instruction::SEVxVy { x, y } => self.op_sevx_vy(x, y),
             Instruction::LDVxImm { x, imm } => self.op_ldvx_imm(x, imm),
             Instruction::ADDVxImm { x, imm } => self.op_addvx_imm(x, imm),
+            Instruction::LDVxVy { x, y } => self.op_ldvx_vy(x, y),
+            Instruction::ORVxVy { x, y } => self.op_orvx_vy(x, y),
+            Instruction::ANDVxVy { x, y } => self.op_andvx_vy(x, y),
+            Instruction::XORVxVy { x, y } => self.op_xorvx_vy(x, y),
+            Instruction::ADDVxVy { x, y } => self.op_addvx_vy(x, y),
+            Instruction::SUBVxVy { x, y } => ,
+            Instruction::SHRVxVy { x, y } => ,
+            Instruction::SUBNVxVy { x, y } => ,
+            Instruction::SHLVxVy { x, y } => ,
+            Instruction::SNEVxVy { x, y } => ,
+            Instruction::LDI(addr) => ,
+            Instruction::JPV0(addr) => ,
+            Instruction::RNDVxImm { x, imm} => ,
+            Instruction::DRWVxVyn {x, y, n} => ,
+            Instruction::DRWVxVy0 { x, y } => ,
+            Instruction::SKPVx(addr) => ,
+            Instruction::SKNPVx(addr) => ,
+            Instruction::LDVxDT(addr) => ,
+            Instruction::LDVxK(addr) => ,
+            Instruction::LDDTVx(addr) => ,
+            Instruction::LDSTVx(addr) => ,
+            Instruction::ADDIVx(addr) => ,
+            Instruction::LDFVx(addr) => ,
+            Instruction::LDBVx(addr) => ,
+            Instruction::LDIVx(addr) => ,
+            Instruction::LDVxI(addr) => ,
+            Instruction::LDHFVx(addr) => ,
+            Instruction::LDRV(addr) => ,
+            Instruction::LDVxR(addr) => ,
+            Instruction::SCD(addr) => ,
+            Instruction::SCR => ,
+            Instruction::SCL => ,
+            Instruction::EXIT => ,
+            Instruction::LOW => ,
+            Instruction::HIGH => ,
+
 
             _ => self.op_unknown(),
         }
@@ -189,6 +225,45 @@ impl Chip8 {
     fn op_addvx_imm(&mut self, x: u8, imm: u8) {
         self.reg_v[x as usize] += imm;
         println!("ADD V{:01X}, {:02X}", x, imm);
+    }
+
+    fn op_ldvx_vy(&mut self, x: u8, y: u8) {
+        self.reg_v[x as usize] = self.reg_v[y as usize];
+        // println!("SE V{:01X}, V{:01X}", x, y);
+    }
+
+    fn op_orvx_vy(&mut self, x: u8, y: u8) {
+        self.reg_v[x as usize] =  self.reg_v[x as usize] | self.reg_v[y as usize];
+        // println!("SE V{:01X}, V{:01X}", x, y);
+    }
+
+    fn op_andvx_vy(&mut self, x: u8, y: u8) {
+        self.reg_v[x as usize] =  self.reg_v[x as usize] & self.reg_v[y as usize];
+        // println!("SE V{:01X}, V{:01X}", x, y);
+    }
+
+    fn op_xorvx_vy(&mut self, x: u8, y: u8) {
+        self.reg_v[x as usize] =  self.reg_v[x as usize] ^ self.reg_v[y as usize];
+        // println!("SE V{:01X}, V{:01X}", x, y);
+    }
+
+    fn op_addvx_vy(&mut self, x: u8, y: u8) {
+        let sum: u8 = self.reg_v[x as usize] + self.reg_v[y as usize];
+        if sum > 0xFF{
+            self.reg_v[0xF] = 1;
+        }else {
+            self.reg_v[0xF] = 0;
+        }
+
+        self.reg_v[x as usize] = sum;
+        // println!("SE V{:01X}, V{:01X}", x, y);
+    }
+
+    fn op_snevx_vy(&mut self, x: u8, y: u8) {
+        if self.reg_v[x as usize] != self.reg_v[y as usize] {
+            self.reg_pc += 2;
+        }
+        println!("SNE V{:01X}, V{:01X}", x, y);
     }
 
     fn op_unknown(&mut self) {
