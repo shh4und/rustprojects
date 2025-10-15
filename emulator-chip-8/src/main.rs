@@ -22,5 +22,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     cpu.load_rom(&rom)
         .map_err(|e| format!("Error at loading rom into Chip8 memory: {}", e))?;
 
+
+    for _ in 0..100 {
+        cpu.cycle();
+    }
+
     Ok(())
 }

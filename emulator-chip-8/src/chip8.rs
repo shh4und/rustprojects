@@ -1,4 +1,4 @@
-use crate::opcodes::{decode, Instruction};
+use crate::opcodes::{Instruction, decode};
 
 const RAM_SIZE: usize = 4096;
 const STACK_SIZE: usize = 16;
@@ -104,7 +104,7 @@ impl Chip8 {
         Ok(())
     }
 
-    pub fn cycle(&mut self){
+    pub fn cycle(&mut self) {
         let opcode = self.fetch();
 
         self.execute(opcode);
@@ -121,14 +121,21 @@ impl Chip8 {
         opcode
     }
 
-    fn execute(&mut self, opcode: u16){
+    fn execute(&mut self, opcode: u16) {
         let instr = decode(opcode);
 
         match instr {
             Instruction::CLS => self.op_cls(),
             Instruction::RET => self.op_ret(),
-            Instruction::JP(addr) => self.op_jp(addr),  
-            _ => self.reset(),
+            Instruction::JP(addr) => self.op_jp(addr),
+            Instruction::CALL(addr) => self.op_call(addr),
+            Instruction::SEVxImm { x, imm } => self.op_sevx_imm(x, imm),
+            Instruction::SNEVxImm { x, imm } => self.op_snevx_imm(x, imm),
+            Instruction::SEVxVy { x, y } => self.op_sevx_vy(x, y),
+            Instruction::LDVxImm { x, imm } => self.op_ldvx_imm(x, imm),
+            Instruction::ADDVxImm { x, imm } => self.op_addvx_imm(x, imm),
+
+            _ => self.op_unknown(),
         }
     }
 
@@ -136,13 +143,55 @@ impl Chip8 {
         self.display.fill(0);
     }
 
-    fn op_ret(&mut self){
+    fn op_ret(&mut self) {
         self.reg_sp -= 1;
         self.reg_pc = self.stack[self.reg_sp as usize]
     }
 
-    fn op_jp(&mut self, addr: u16){
+    fn op_jp(&mut self, addr: u16) {
         self.reg_pc = addr;
+        println!("JMP ${:03X}", addr);
     }
-    
+
+    fn op_call(&mut self, addr: u16) {
+        self.stack[self.reg_sp as usize] = self.reg_pc;
+        self.reg_sp += 1;
+        self.reg_pc = addr;
+        println!("CALL ${:03X}", addr);
+    }
+
+    fn op_sevx_imm(&mut self, x: u8, imm: u8) {
+        if self.reg_v[x as usize] == imm {
+            self.reg_pc += 2;
+        }
+        println!("SE V{:01X}, {:02X}", x, imm);  
+    }
+
+    fn op_snevx_imm(&mut self, x: u8, imm: u8) {
+        if self.reg_v[x as usize] != imm {
+            self.reg_pc += 2;
+        }
+        println!("SNE V{:01X}, {:02X}", x, imm);
+    }
+
+    fn op_sevx_vy(&mut self, x: u8, y: u8) {
+        if self.reg_v[x as usize] == self.reg_v[y as usize] {
+            self.reg_pc += 2;
+        }
+        println!("SE V{:01X}, V{:01X}", x, y);
+    }
+
+    fn op_ldvx_imm(&mut self, x: u8, imm: u8) {
+        self.reg_v[x as usize] = imm;
+        println!("LD V{:01X}, {:02X}", x, imm);
+    }
+
+    fn op_addvx_imm(&mut self, x: u8, imm: u8) {
+        self.reg_v[x as usize] += imm;
+        println!("ADD V{:01X}, {:02X}", x, imm);
+    }
+
+    fn op_unknown(&mut self) {
+        eprintln!("Unknown or not decoded instruction");
+    }
 }
