@@ -2,52 +2,98 @@
 // use std::fmt;
 
 pub enum Instruction {
-    CLS, // Clear the display.
-    RET, // Return from a subroutine.
-    SYS(u16), // Jump to a machine code routine at nnn. (Ignored by modern interpreters.)
-    JP(u16), // Jump to location nnn.
-    CALL(u16), // Call subroutine at nnn.
-    SEVxImm { x: u8, imm: u8 }, // Skip next instruction if Vx == kk.
-    SNEVxImm { x: u8, imm: u8 }, // Skip next instruction if Vx != kk.
-    SEVxVy { x: u8, y: u8 }, // Skip next instruction if Vx == Vy.
-    LDVxImm { x: u8, imm: u8 }, // Set Vx = kk.
-    ADDVxImm { x: u8, imm: u8 }, // Set Vx = Vx + kk.
-    LDVxVy { x: u8, y: u8 }, // Set Vx = Vy.
-    ORVxVy { x: u8, y: u8 }, // Set Vx = Vx | Vy (bitwise OR).
-    ANDVxVy { x: u8, y: u8 }, // Set Vx = Vx & Vy (bitwise AND).
-    XORVxVy { x: u8, y: u8 }, // Set Vx = Vx ^ Vy (bitwise XOR).
-    ADDVxVy { x: u8, y: u8 }, // Set Vx = Vx + Vy, set VF = carry.
-    SUBVxVy { x: u8, y: u8 }, // Set Vx = Vx - Vy, set VF = NOT borrow.
-    SHRVxVy { x: u8, y: u8 }, // Set Vx = Vx >> 1, set VF = LSB.
-    SUBNVxVy { x: u8, y: u8 }, // Set Vx = Vy - Vx, set VF = NOT borrow.
-    SHLVxVy { x: u8, y: u8 }, // Set Vx = Vx << 1, set VF = MSB.
-    SNEVxVy { x: u8, y: u8 }, // Skip next instruction if Vx != Vy.
-    LDI(u16), // Set I = nnn.
-    JPV0(u16), // Jump to location nnn + V0.
-    RNDVxImm { x: u8, imm: u8}, // Set Vx = random byte & kk.
-    DRWVxVyn {x: u8, y: u8, n: u8}, // Display n-byte sprite at (Vx, Vy), set VF = collision.
-    DRWVxVy0 { x: u8, y: u8 }, // Display 16x16 sprite at (Vx, Vy), set VF = collision. (Super Chip-48)
-    SKPVx(u8), // Skip next instruction if key Vx is pressed.
-    SKNPVx(u8), // Skip next instruction if key Vx is not pressed.
-    LDVxDT(u8), // Set Vx = delay timer value.
-    LDVxK(u8), // Wait for key press, store in Vx.
-    LDDTVx(u8), // Set delay timer = Vx.
-    LDSTVx(u8), // Set sound timer = Vx.
-    ADDIVx(u8), // Set I = I + Vx.
-    LDFVx(u8), // Set I = location of sprite for digit Vx.
-    LDBVx(u8), // Store BCD of Vx in memory at I, I+1, I+2.
-    LDIVx(u8), // Store registers V0 through Vx in memory starting at I.
-    LDVxI(u8), // Read registers V0 through Vx from memory starting at I.
-    LDHFVx(u8), // Set I = location of high-res sprite for digit Vx. (Super Chip-48)
-    LDRV(u8), // Store Vx in RPL user flags. (Super Chip-48)
-    LDVxR(u8), // Read Vx from RPL user flags. (Super Chip-48)
-    SCD(u8), // Scroll display down by n lines. (Super Chip-48)
-    SCR, // Scroll display right by 4 pixels. (Super Chip-48)
-    SCL, // Scroll display left by 4 pixels. (Super Chip-48)
-    EXIT, // Exit the interpreter. (Super Chip-48)
-    LOW, // Set display to low resolution (64x32). (Super Chip-48)
-    HIGH, // Set display to high resolution (128x64). (Super Chip-48)
-    Unknown(u16), // Unknown opcode.
+    /// Clear the display.
+    CLS, 
+    /// Return from a subroutine.
+    RET, 
+    /// Jump to a machine code routine at nnn. (Ignored by modern interpreters.)
+    SYS(u16), 
+    /// Jump to location nnn.
+    JP(u16), 
+    /// Call subroutine at nnn.
+    CALL(u16), 
+    /// Skip next instruction if Vx == kk.
+    SEVxImm { x: u8, imm: u8 }, 
+    /// Skip next instruction if Vx != kk.
+    SNEVxImm { x: u8, imm: u8 }, 
+    /// Skip next instruction if Vx == Vy.
+    SEVxVy { x: u8, y: u8 }, 
+    /// Set Vx = kk.
+    LDVxImm { x: u8, imm: u8 }, 
+    /// Set Vx = Vx + kk.
+    ADDVxImm { x: u8, imm: u8 }, 
+    /// Set Vx = Vy.
+    LDVxVy { x: u8, y: u8 }, 
+    /// Set Vx = Vx | Vy (bitwise OR).
+    ORVxVy { x: u8, y: u8 }, 
+    /// Set Vx = Vx & Vy (bitwise AND).
+    ANDVxVy { x: u8, y: u8 }, 
+    /// Set Vx = Vx ^ Vy (bitwise XOR).
+    XORVxVy { x: u8, y: u8 }, 
+    /// Set Vx = Vx + Vy, set VF = carry.
+    ADDVxVy { x: u8, y: u8 }, 
+    /// Set Vx = Vx - Vy, set VF = NOT borrow.
+    SUBVxVy { x: u8, y: u8 }, 
+    /// Set Vx = Vx >> 1, set VF = LSB.
+    SHRVxVy { x: u8, y: u8 }, 
+    /// Set Vx = Vy - Vx, set VF = NOT borrow.
+    SUBNVxVy { x: u8, y: u8 }, 
+    /// Set Vx = Vx << 1, set VF = MSB.
+    SHLVxVy { x: u8, y: u8 }, 
+    /// Skip next instruction if Vx != Vy.
+    SNEVxVy { x: u8, y: u8 }, 
+    /// Set I = nnn.
+    LDI(u16), 
+    /// Jump to location nnn + V0.
+    JPV0(u16), 
+    /// Set Vx = random byte & kk.
+    RNDVxImm { x: u8, imm: u8}, 
+    /// Display n-byte sprite at (Vx, Vy), set VF = collision.
+    DRWVxVyn {x: u8, y: u8, n: u8}, 
+    /// Display 16x16 sprite at (Vx, Vy), set VF = collision. (Super Chip-48)
+    DRWVxVy0 { x: u8, y: u8 }, 
+    /// Skip next instruction if key Vx is pressed.
+    SKPVx(u8), 
+    /// Skip next instruction if key Vx is not pressed.
+    SKNPVx(u8), 
+    /// Set Vx = delay timer value.
+    LDVxDT(u8), 
+    /// Wait for key press, store in Vx.
+    LDVxK(u8), 
+    /// Set delay timer = Vx.
+    LDDTVx(u8), 
+    /// Set sound timer = Vx.
+    LDSTVx(u8), 
+    /// Set I = I + Vx.
+    ADDIVx(u8), 
+    /// Set I = location of sprite for digit Vx.
+    LDFVx(u8), 
+    /// Store BCD of Vx in memory at I, I+1, I+2.
+    LDBVx(u8), 
+    /// Store registers V0 through Vx in memory starting at I.
+    LDIVx(u8), 
+    /// Read registers V0 through Vx from memory starting at I.
+    LDVxI(u8), 
+    /// Set I = location of high-res sprite for digit Vx. (Super Chip-48)
+    LDHFVx(u8), 
+    /// Store Vx in RPL user flags. (Super Chip-48)
+    LDRV(u8), 
+    /// Read Vx from RPL user flags. (Super Chip-48)
+    LDVxR(u8), 
+    /// Scroll display down by n lines. (Super Chip-48)
+    SCD(u8), 
+    /// Scroll display right by 4 pixels. (Super Chip-48)
+    SCR, 
+    /// Scroll display left by 4 pixels. (Super Chip-48)
+    SCL, 
+    /// Exit the interpreter. (Super Chip-48)
+    EXIT, 
+    /// Set display to low resolution (64x32). (Super Chip-48)
+    LOW, 
+    /// Set display to high resolution (128x64). (Super Chip-48)
+    HIGH, 
+    /// Unknown opcode.
+    Unknown(u16), 
 }
 
 pub fn decode(opcode: u16) -> Instruction {
