@@ -1,5 +1,5 @@
 use crate::opcodes::{Instruction, decode};
-
+use rand::Rng;
 const RAM_SIZE: usize = 4096;
 const STACK_SIZE: usize = 16;
 const DISPLAY_WIDTH: usize = 64;
@@ -127,6 +127,7 @@ impl Chip8 {
         match instr {
             Instruction::CLS => self.op_cls(),
             Instruction::RET => self.op_ret(),
+            Instruction::SYS(addr) => self.op_sys(addr),
             Instruction::JP(addr) => self.op_jp(addr),
             Instruction::CALL(addr) => self.op_call(addr),
             Instruction::SEVxImm { x, imm } => self.op_sevx_imm(x, imm),
@@ -139,14 +140,14 @@ impl Chip8 {
             Instruction::ANDVxVy { x, y } => self.op_andvx_vy(x, y),
             Instruction::XORVxVy { x, y } => self.op_xorvx_vy(x, y),
             Instruction::ADDVxVy { x, y } => self.op_addvx_vy(x, y),
-            Instruction::SUBVxVy { x, y } => ,
-            Instruction::SHRVxVy { x, y } => ,
-            Instruction::SUBNVxVy { x, y } => ,
-            Instruction::SHLVxVy { x, y } => ,
-            Instruction::SNEVxVy { x, y } => ,
-            Instruction::LDI(addr) => ,
-            Instruction::JPV0(addr) => ,
-            Instruction::RNDVxImm { x, imm} => ,
+            Instruction::SUBVxVy { x, y } => self.op_subvx_vy(x, y),
+            Instruction::SHRVxVy { x, y } => self.op_shrvx(x),
+            Instruction::SUBNVxVy { x, y } => self.op_subnvx_vy(x, y),
+            Instruction::SHLVxVy { x, y } => self.op_shlvx(x),
+            Instruction::SNEVxVy { x, y } => self.op_snevx_vy(x, y),
+            Instruction::LDI(addr) => self.op_ldi_addr(addr),
+            Instruction::JPV0(addr) => self.op_jpv0_addr(addr),
+            Instruction::RNDVxImm { x, imm} => self.op_rndvx_imm(x, imm),
             Instruction::DRWVxVyn {x, y, n} => ,
             Instruction::DRWVxVy0 { x, y } => ,
             Instruction::SKPVx(addr) => ,
@@ -184,67 +185,60 @@ impl Chip8 {
         self.reg_pc = self.stack[self.reg_sp as usize]
     }
 
+    fn op_sys(&mut self, addr: u16) {
+        self.reg_pc = addr; // TO CHECK IF SYS IS IGNORED, IF SO, PC+=2
+    }
+
     fn op_jp(&mut self, addr: u16) {
         self.reg_pc = addr;
-        println!("JMP ${:03X}", addr);
     }
 
     fn op_call(&mut self, addr: u16) {
         self.stack[self.reg_sp as usize] = self.reg_pc;
         self.reg_sp += 1;
         self.reg_pc = addr;
-        println!("CALL ${:03X}", addr);
     }
 
     fn op_sevx_imm(&mut self, x: u8, imm: u8) {
         if self.reg_v[x as usize] == imm {
             self.reg_pc += 2;
         }
-        println!("SE V{:01X}, {:02X}", x, imm);  
     }
 
     fn op_snevx_imm(&mut self, x: u8, imm: u8) {
         if self.reg_v[x as usize] != imm {
             self.reg_pc += 2;
         }
-        println!("SNE V{:01X}, {:02X}", x, imm);
     }
 
     fn op_sevx_vy(&mut self, x: u8, y: u8) {
         if self.reg_v[x as usize] == self.reg_v[y as usize] {
             self.reg_pc += 2;
         }
-        println!("SE V{:01X}, V{:01X}", x, y);
     }
 
     fn op_ldvx_imm(&mut self, x: u8, imm: u8) {
         self.reg_v[x as usize] = imm;
-        println!("LD V{:01X}, {:02X}", x, imm);
     }
 
     fn op_addvx_imm(&mut self, x: u8, imm: u8) {
         self.reg_v[x as usize] += imm;
-        println!("ADD V{:01X}, {:02X}", x, imm);
     }
 
     fn op_ldvx_vy(&mut self, x: u8, y: u8) {
         self.reg_v[x as usize] = self.reg_v[y as usize];
-        // println!("SE V{:01X}, V{:01X}", x, y);
     }
 
     fn op_orvx_vy(&mut self, x: u8, y: u8) {
         self.reg_v[x as usize] =  self.reg_v[x as usize] | self.reg_v[y as usize];
-        // println!("SE V{:01X}, V{:01X}", x, y);
     }
 
     fn op_andvx_vy(&mut self, x: u8, y: u8) {
         self.reg_v[x as usize] =  self.reg_v[x as usize] & self.reg_v[y as usize];
-        // println!("SE V{:01X}, V{:01X}", x, y);
     }
 
     fn op_xorvx_vy(&mut self, x: u8, y: u8) {
         self.reg_v[x as usize] =  self.reg_v[x as usize] ^ self.reg_v[y as usize];
-        // println!("SE V{:01X}, V{:01X}", x, y);
     }
 
     fn op_addvx_vy(&mut self, x: u8, y: u8) {
@@ -256,7 +250,38 @@ impl Chip8 {
         }
 
         self.reg_v[x as usize] = sum;
-        // println!("SE V{:01X}, V{:01X}", x, y);
+    }
+
+    fn op_subvx_vy(&mut self, x: u8, y: u8) {
+        if self.reg_v[x as usize] > self.reg_v[y as usize]{
+            self.reg_v[0xF] = 1;
+        }else {
+            self.reg_v[0xF] = 0;
+        }
+        
+        self.reg_v[x as usize] -= self.reg_v[y as usize];
+    }
+
+    fn op_shrvx(&mut self, x: u8) {
+        self.reg_v[0xF] = self.reg_v[x as usize] & 0x1;
+
+        self.reg_v[x as usize] >>= 1;
+    }
+
+    fn op_subnvx_vy(&mut self, x: u8, y: u8) {
+        if self.reg_v[y as usize] > self.reg_v[x as usize]{
+            self.reg_v[0xF] = 1;
+        }else {
+            self.reg_v[0xF] = 0;
+        }
+        
+        self.reg_v[x as usize] = self.reg_v[y as usize] - self.reg_v[x as usize];
+    }
+
+    fn op_shlvx(&mut self, x: u8) {
+        self.reg_v[0xF] = (self.reg_v[x as usize] & 0x80) >> 7;
+
+        self.reg_v[x as usize] <<= 1;
     }
 
     fn op_snevx_vy(&mut self, x: u8, y: u8) {
@@ -264,6 +289,22 @@ impl Chip8 {
             self.reg_pc += 2;
         }
         println!("SNE V{:01X}, V{:01X}", x, y);
+    }
+
+    fn op_ldi_addr(&mut self, addr: u16) {
+        self.reg_i = addr;
+    }
+
+    fn op_jpv0_addr(&mut self, addr: u16) {
+        self.reg_pc = (self.reg_v[0x0] as u16) + addr;
+    }
+
+    fn op_rndvx_imm(&mut self, x: u8, imm: u8) {
+        let mut rng = rand::rng();
+        let randByte: u8 = rng.random_range(0x0..0xFF);
+
+        self.reg_v[x as usize] = randByte & imm;
+        
     }
 
     fn op_unknown(&mut self) {
