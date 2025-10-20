@@ -35,11 +35,11 @@ pub enum Instruction {
     /// Set Vx = Vx - Vy, set VF = NOT borrow.
     SUBVxVy { x: u8, y: u8 }, 
     /// Set Vx = Vx >> 1, set VF = LSB.
-    SHRVxVy { x: u8, y: u8 }, 
+    SHRVxVy { x: u8,}, 
     /// Set Vx = Vy - Vx, set VF = NOT borrow.
     SUBNVxVy { x: u8, y: u8 }, 
     /// Set Vx = Vx << 1, set VF = MSB.
-    SHLVxVy { x: u8, y: u8 }, 
+    SHLVxVy { x: u8}, 
     /// Skip next instruction if Vx != Vy.
     SNEVxVy { x: u8, y: u8 }, 
     /// Set I = nnn.
@@ -126,9 +126,9 @@ pub fn decode(opcode: u16) -> Instruction {
             0x3 => Instruction::XORVxVy { x: x(opcode), y: y(opcode) },
             0x4 => Instruction::ADDVxVy { x: x(opcode), y: y(opcode) },
             0x5 => Instruction::SUBVxVy { x: x(opcode), y: y(opcode) },
-            0x6 => Instruction::SHRVxVy { x: x(opcode), y: y(opcode) },
+            0x6 => Instruction::SHRVxVy { x: x(opcode),},
             0x7 => Instruction::SUBNVxVy { x: x(opcode), y: y(opcode) },
-            0xE => Instruction::SHLVxVy { x: x(opcode), y: y(opcode) },
+            0xE => Instruction::SHLVxVy { x: x(opcode),},
             _ => Instruction::Unknown(opcode),
 
         },
