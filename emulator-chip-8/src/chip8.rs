@@ -141,36 +141,25 @@ impl Chip8 {
             Instruction::XORVxVy { x, y } => self.op_xorvx_vy(x, y),
             Instruction::ADDVxVy { x, y } => self.op_addvx_vy(x, y),
             Instruction::SUBVxVy { x, y } => self.op_subvx_vy(x, y),
-            Instruction::SHRVxVy { x, y } => self.op_shrvx(x),
+            Instruction::SHRVxVy { x } => self.op_shrvx(x),
             Instruction::SUBNVxVy { x, y } => self.op_subnvx_vy(x, y),
-            Instruction::SHLVxVy { x, y } => self.op_shlvx(x),
+            Instruction::SHLVxVy { x } => self.op_shlvx(x),
             Instruction::SNEVxVy { x, y } => self.op_snevx_vy(x, y),
             Instruction::LDI(addr) => self.op_ldi_addr(addr),
             Instruction::JPV0(addr) => self.op_jpv0_addr(addr),
-            Instruction::RNDVxImm { x, imm} => self.op_rndvx_imm(x, imm),
-            Instruction::DRWVxVyn {x, y, n} => ,
-            Instruction::DRWVxVy0 { x, y } => ,
-            Instruction::SKPVx(addr) => ,
-            Instruction::SKNPVx(addr) => ,
-            Instruction::LDVxDT(addr) => ,
-            Instruction::LDVxK(addr) => ,
-            Instruction::LDDTVx(addr) => ,
-            Instruction::LDSTVx(addr) => ,
-            Instruction::ADDIVx(addr) => ,
-            Instruction::LDFVx(addr) => ,
-            Instruction::LDBVx(addr) => ,
-            Instruction::LDIVx(addr) => ,
-            Instruction::LDVxI(addr) => ,
-            Instruction::LDHFVx(addr) => ,
-            Instruction::LDRV(addr) => ,
-            Instruction::LDVxR(addr) => ,
-            Instruction::SCD(addr) => ,
-            Instruction::SCR => ,
-            Instruction::SCL => ,
-            Instruction::EXIT => ,
-            Instruction::LOW => ,
-            Instruction::HIGH => ,
-
+            Instruction::RNDVxImm { x, imm } => self.op_rndvx_imm(x, imm),
+            //Instruction::DRWVxVyn {x, y, n} => ,
+            Instruction::SKPVx(x) => self.op_skpvx(x),
+            Instruction::SKNPVx(x) => self.op_sknpvx(x),
+            Instruction::LDVxDT(x) => self.op_ldvx_dt(x),
+            Instruction::LDVxK(x) => self.op_ldvx_k(x),
+            Instruction::LDDTVx(x) => self.op_lddt_vx(x),
+            Instruction::LDSTVx(x) => self.op_ldst_vx(x),
+            Instruction::ADDIVx(x) => self.op_addi_vx(x),
+            Instruction::LDFVx(x) => self.op_ldf_vx(x),
+            Instruction::LDBVx(x) => self.op_ldb_vx(x),
+            Instruction::LDIVx(x) => self.op_ldi_vx(x),
+            Instruction::LDVxI(x) => self.op_ldvx_i(x),
 
             _ => self.op_unknown(),
         }
@@ -230,22 +219,22 @@ impl Chip8 {
     }
 
     fn op_orvx_vy(&mut self, x: u8, y: u8) {
-        self.reg_v[x as usize] =  self.reg_v[x as usize] | self.reg_v[y as usize];
+        self.reg_v[x as usize] = self.reg_v[x as usize] | self.reg_v[y as usize];
     }
 
     fn op_andvx_vy(&mut self, x: u8, y: u8) {
-        self.reg_v[x as usize] =  self.reg_v[x as usize] & self.reg_v[y as usize];
+        self.reg_v[x as usize] = self.reg_v[x as usize] & self.reg_v[y as usize];
     }
 
     fn op_xorvx_vy(&mut self, x: u8, y: u8) {
-        self.reg_v[x as usize] =  self.reg_v[x as usize] ^ self.reg_v[y as usize];
+        self.reg_v[x as usize] = self.reg_v[x as usize] ^ self.reg_v[y as usize];
     }
 
     fn op_addvx_vy(&mut self, x: u8, y: u8) {
         let sum: u8 = self.reg_v[x as usize] + self.reg_v[y as usize];
-        if sum > 0xFF{
+        if sum > 0xFF as u8 {
             self.reg_v[0xF] = 1;
-        }else {
+        } else {
             self.reg_v[0xF] = 0;
         }
 
@@ -253,12 +242,12 @@ impl Chip8 {
     }
 
     fn op_subvx_vy(&mut self, x: u8, y: u8) {
-        if self.reg_v[x as usize] > self.reg_v[y as usize]{
+        if self.reg_v[x as usize] > self.reg_v[y as usize] {
             self.reg_v[0xF] = 1;
-        }else {
+        } else {
             self.reg_v[0xF] = 0;
         }
-        
+
         self.reg_v[x as usize] -= self.reg_v[y as usize];
     }
 
@@ -269,12 +258,12 @@ impl Chip8 {
     }
 
     fn op_subnvx_vy(&mut self, x: u8, y: u8) {
-        if self.reg_v[y as usize] > self.reg_v[x as usize]{
+        if self.reg_v[y as usize] > self.reg_v[x as usize] {
             self.reg_v[0xF] = 1;
-        }else {
+        } else {
             self.reg_v[0xF] = 0;
         }
-        
+
         self.reg_v[x as usize] = self.reg_v[y as usize] - self.reg_v[x as usize];
     }
 
@@ -301,10 +290,113 @@ impl Chip8 {
 
     fn op_rndvx_imm(&mut self, x: u8, imm: u8) {
         let mut rng = rand::rng();
-        let randByte: u8 = rng.random_range(0x0..0xFF);
+        let rand_byte: u8 = rng.random_range(0x0..0xFF);
 
-        self.reg_v[x as usize] = randByte & imm;
+        self.reg_v[x as usize] = rand_byte & imm;
+    }
+
+    fn op_drwvx_vy_n(&mut self, x: u8, y: u8, n: u8) {
         
+    }
+
+    fn op_skpvx(&mut self, x: u8) {
+        let key: u8 = self.reg_v[x as usize];
+
+        if self.keypad[key as usize] != 0x0 {
+            self.reg_pc += 2;
+        }
+    }
+
+    fn op_sknpvx(&mut self, x: u8) {
+        let key: u8 = self.reg_v[x as usize];
+
+        if self.keypad[key as usize] == 0x0 {
+            self.reg_pc += 2;
+        }
+    }
+
+    fn op_ldvx_dt(&mut self, x: u8) {
+        self.reg_v[x as usize] = self.reg_dt;
+    }
+
+    fn op_ldvx_k(&mut self, x: u8) {
+        if self.keypad[0] != 0x0 {
+            self.reg_v[x as usize] = 0;
+        } else if self.keypad[1] != 0x0 {
+            self.reg_v[x as usize] = 1;
+        } else if self.keypad[2] != 0x0 {
+            self.reg_v[x as usize] = 2;
+        } else if self.keypad[3] != 0x0 {
+            self.reg_v[x as usize] = 3;
+        } else if self.keypad[4] != 0x0 {
+            self.reg_v[x as usize] = 4;
+        } else if self.keypad[5] != 0x0 {
+            self.reg_v[x as usize] = 5;
+        } else if self.keypad[6] != 0x0 {
+            self.reg_v[x as usize] = 6;
+        } else if self.keypad[7] != 0x0 {
+            self.reg_v[x as usize] = 7;
+        } else if self.keypad[8] != 0x0 {
+            self.reg_v[x as usize] = 8;
+        } else if self.keypad[9] != 0x0 {
+            self.reg_v[x as usize] = 9;
+        } else if self.keypad[10] != 0x0 {
+            self.reg_v[x as usize] = 10;
+        } else if self.keypad[11] != 0x0 {
+            self.reg_v[x as usize] = 11;
+        } else if self.keypad[12] != 0x0 {
+            self.reg_v[x as usize] = 12;
+        } else if self.keypad[13] != 0x0 {
+            self.reg_v[x as usize] = 13;
+        } else if self.keypad[14] != 0x0 {
+            self.reg_v[x as usize] = 14;
+        } else if self.keypad[15] != 0x0 {
+            self.reg_v[x as usize] = 15;
+        } else {
+            self.reg_pc -= 2;
+        }
+    }
+
+    fn op_lddt_vx(&mut self, x: u8) {
+        self.reg_dt = self.reg_v[x as usize];
+    }
+
+    fn op_ldst_vx(&mut self, x: u8) {
+        self.reg_st = self.reg_v[x as usize];
+    }
+
+    fn op_addi_vx(&mut self, x: u8) {
+        self.reg_i += self.reg_v[x as usize] as u16;
+    }
+
+    fn op_ldf_vx(&mut self, x: u8) {
+        let digit: usize = self.reg_v[x as usize] as usize;
+        self.reg_i = (FONT_START_ADDR + (5 * digit)) as u16;
+    }
+
+    fn op_ldb_vx(&mut self, x: u8) {
+        let mut value: u8 = self.reg_v[x as usize];
+
+        // ones-place
+        self.ram[(self.reg_i as usize) + 2] = value % 10;
+        value /= 10;
+        // tens-place
+        self.ram[(self.reg_i as usize) + 1] = value % 10;
+        value /= 10;
+        // hundreds-place
+        self.ram[self.reg_i as usize] = value % 10;
+    }
+
+    fn op_ldi_vx(&mut self, x: u8) {
+        for i in 0x0..=x as usize {
+            self.ram[(self.reg_i as usize) + i] = self.reg_v[i];
+        }
+    }
+
+    fn op_ldvx_i(&mut self, x: u8) {
+        for i in 0x0..=x as usize {
+            self.reg_v[i] = self.ram[(self.reg_i as usize) + i];
+        }
     }
 
     fn op_unknown(&mut self) {
